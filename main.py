@@ -154,14 +154,14 @@ def restart():
 
 
 def reboot(new_df):
-    if st.session_state.is_change[st.session_state.page - 1] == True:
+    if st.session_state.is_change[st.session_state.page-1] == True:
         st.session_state.likes = st.session_state.page_elem.likes
         st.session_state.dislikes = st.session_state.page_elem.dislikes
         st.session_state.sliders = st.session_state.page_elem.sliders
         st.session_state.model = None
         st.session_state.page_elem.change_df(new_df)
         st.session_state.page_elem.update_values()
-        st.session_state.is_change[st.session_state.page - 1] = False
+        st.session_state.is_change[st.session_state.page-1] = False
 
 
 def show_page():
