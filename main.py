@@ -3,11 +3,12 @@ import pandas as pd
 #import numpy as np
 import sys
 import streamlit_scrollable_textbox as stx
+import emoji
 
 
 def settings():
     # Настройка заголовка и размеров активной области
-    st.set_page_config(page_title="Обратная связь для новых пользователей", layout="wide")
+    st.set_page_config(page_title="Обратная связь для новых пользователей RuTube", layout="wide")
     st.markdown(
         """
         <style>
@@ -21,9 +22,9 @@ def settings():
         """,
         unsafe_allow_html=True,
     )
-    st.title("Веб-приложение решения проблемы :blue['холодного старта'] у новых пользователей")
+    st.title("Решение проблемы :blue['холодного старта'] у новых пользователей")
     st.header("")
-    st.subheader("_Cписок видео_")
+    st.subheader("Пожалуйста, оцените нижепредложенные видео")
     st.subheader("")
 
 
@@ -49,20 +50,29 @@ def change_columns_df(df):
 
 
 class Page():
-    def __init__(self, placeholder, df):
+    def __init__(self, placeholder, df, page):
         self.placeholder = placeholder
         self.df = df
+        self.page = page
         self.sliders = []
         self.likes = []
         self.dislikes = []
-        self.show_number()
-        self.show_titles()
-        self.show_videos()
+
+
+    def change_df(self, new_df):
+        self.df = new_df
+
+
+    def update_values(self):
+        self.page += 1
+        self.sliders = []
+        self.likes = []
+        self.dislikes = []
 
 
     def show_number(self):
         with st.container():
-            st.metric("Page: ", value=st.session_state.page)
+            st.metric(f"Page: ", value=f"{st.session_state.page}/20")
 
 
     def show_titles(self):
@@ -106,57 +116,59 @@ class Page():
                         #stx.scrollableTextbox(df.iloc[i, 1], height=50, key=1*df.shape[0]+i)
                 
             with col3:
-                #st.write(r"$\textsf{\normalsize Категория}$")
-                #st.markdown("##### **_" + df.columns[2] + "_**")
                 for i in range(self.df.shape[0]):
                     with st.container(height=100):
                         st.write(self.df.iloc[i, 2])
-                        #stx.scrollableTextbox(df.iloc[i, 2], height=50, key=2*df.shape[0]+i)
 
             with col4:
-                #st.write(r"$\textsf{\normalsize Описание}$")
-                #st.markdown("##### **_" + df.columns[3] + "_**")
                 for i in range(self.df.shape[0]):
                     with st.container(height=100):
                         st.write(self.df.iloc[i, 3])
-                        #stx.scrollableTextbox(df.iloc[i, 3], height=50, key=3*df.shape[0]+i)
 
             with col5:
-                #st.write(r"$\textsf{\normalsize Дата публикации}$")
-                #st.markdown("##### **_" + df.columns[4] + "_**")
                 for i in range(self.df.shape[0]):
                     with st.container(height=100):
                         st.write(self.df.iloc[i, 4])
-                        #stx.scrollableTextbox(df.iloc[i, 4], height=50, key=4*df.shape[0]+i)
 
             with col6:
-                #st.write(r"$\textsf{\normalsize Оценка}$")
                 col6_1, col6_2 = st.columns(2, gap='small')
 
                 with col6_1:
                     for i in range(self.df.shape[0]):
                         with st.container(height=100):
-                            self.sliders.append(st.slider(label="", min_value=0, max_value=100, value=0, key=5*self.df.shape[0]+i))
+                            self.sliders.append(st.slider(label="", min_value=0, max_value=100, value=0, key=self.page*100 + self.df.shape[0]+i))
 
                 with col6_2:
                     for i in range(self.df.shape[0]):
                         with st.container(height=100):
-                            self.likes.append(st.checkbox(label="Like", key=6*self.df.shape[0]+i))
-                            self.dislikes.append(st.checkbox(label="Dislike", key=7*self.df.shape[0]+i))
-                            #dislikes.append(st.checkbox(label="Dislike", key=i+1))
-
-                #with col6_2:
-                #    for i in range(df.shape[0]):
-                #        with st.container(height=50):
-                #            dislikes.append(st.checkbox(label="Dislike", key=6*df.shape[0]+i))
-                            #likes.append(st.checkbox(label="Like", key=i))        
+                            self.likes.append(st.checkbox(label=emoji.emojize("L :thumbs_up:"), key=self.page*100 + 2*self.df.shape[0]+i))
+                            self.dislikes.append(st.checkbox(label=emoji.emojize("D :thumbs_down:"), key=self.page*100 + 3*self.df.shape[0]+i))     
 
 
 def nextpage(): 
     st.session_state.page += 1
-    
+
+
 def restart(): 
-    st.session_state.page = 0
+    st.session_state.page = 1
+
+
+def reboot(new_df):
+    if st.session_state.is_change[st.session_state.page - 1] == True:
+        st.session_state.likes = st.session_state.page_elem.likes
+        st.session_state.dislikes = st.session_state.page_elem.dislikes
+        st.session_state.sliders = st.session_state.page_elem.sliders
+        st.session_state.model = None
+        st.session_state.page_elem.change_df(new_df)
+        st.session_state.page_elem.update_values()
+        st.session_state.is_change[st.session_state.page - 1] = False
+
+
+def show_page():
+    st.session_state.page_elem.show_number()
+    st.session_state.page_elem.show_titles()
+    st.session_state.page_elem.show_videos()
+    st.session_state.is_change[st.session_state.page] = True    
 
 
 def main():
@@ -164,27 +176,27 @@ def main():
 
     df = change_columns_df(init_df())
     df_1 = change_columns_df(init_df("новый датасет"))
+    placeholder = st.empty()
 
     if "page" not in st.session_state:
-        st.session_state.page = 0
+        st.session_state.page_elem = Page(placeholder, df, 1)
+        st.session_state.sliders = []
+        st.session_state.likes = []
+        st.session_state.dislikes = []
+        st.session_state.model = None
+        st.session_state.page = 1
+        st.session_state.is_change = [False for i in range(21)]
 
-    placeholder = st.empty()
-    
-    st.button("Next",on_click=nextpage,disabled=(st.session_state.page > 2))
+   # button_next = st.button("Next", disabled=(st.session_state.page > 3))
 
-    if st.session_state.page == 0:
-        page = Page(placeholder, df)
-        st.write(page.likes)
+    st.button("Next",on_click=nextpage,disabled=(st.session_state.page > 21))
 
     if st.session_state.page == 1:
-        page = Page(placeholder, df_1)
-        st.write(page.likes)
+        show_page()
 
-    if st.session_state.page == 2:
-        page = Page(placeholder, df)
-        st.write(page.likes)
-
-
+    elif st.session_state.page <= 20:
+        reboot(df_1)
+        show_page()
 
     else:
         with placeholder:
