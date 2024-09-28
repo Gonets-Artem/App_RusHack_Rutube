@@ -4,8 +4,12 @@ from page import Page
 #import numpy as np
 
 
-def settings_params():
-    # Настройка заголовка и размеров активной области
+def settings_params() -> None:
+    """
+    Set page config, title and headers.
+
+    :return: None
+    """
     st.set_page_config(page_title="Обратная связь для новых пользователей RuTube", layout="wide")
     st.markdown(
         """
@@ -24,6 +28,7 @@ def settings_params():
     st.header("")
     st.subheader("Пожалуйста, оцените нижепредложенные видео")
     st.subheader("")
+    return None
 
 
 def init_df(new=""):
@@ -47,44 +52,84 @@ def change_columns_df(df):
     })
 
 
-def nextpage(): 
+def nextpage() -> None: 
+    """
+    Move to next page of videos.
+
+    :return: None
+    """
     st.session_state.page += 1
+    return None
 
 
 def restart(): 
+    """
+    Return to first page of videos.
+
+    :return: None
+    """
     st.session_state.page = 1
+    return None
 
 
-def start(placeholder, df):
+def init(placeholder: st.empty, df: pd.DataFrame) -> bool:
+    """
+    Initialization elements of veb-site.
+
+    :param placeholder: place for restart button
+    :param df: table about first top ten videos (title, category, description, date) 
+    :return: status for debugging (True - init, False - not init)
+    """
     if "page" not in st.session_state:
-        st.session_state.page_elem = Page(placeholder, df, 1)
+        st.session_state.page = 1
         st.session_state.sliders = []
         st.session_state.likes = []
         st.session_state.dislikes = []
+        st.session_state.obj = Page(placeholder, df, st.session_state.page)
         st.session_state.model = None
-        st.session_state.page = 1
         st.session_state.is_change = [False for i in range(21)]
+        return True
+    return False
 
 
-def reboot(new_df):
+def update(new_df: pd.DataFrame) -> bool:
+    """
+    Updating elements of veb-site.
+
+    :param new_df: table about new top ten videos (title, category, description, date)
+    :return: status for debugging (True - update, False - not update) 
+    """
     if st.session_state.is_change[st.session_state.page-1] == True:
-        st.session_state.likes = st.session_state.page_elem.likes
-        st.session_state.dislikes = st.session_state.page_elem.dislikes
-        st.session_state.sliders = st.session_state.page_elem.sliders
+        st.session_state.likes = st.session_state.obj.likes
+        st.session_state.dislikes = st.session_state.obj.dislikes
+        st.session_state.sliders = st.session_state.obj.sliders
         st.session_state.model = None
-        st.session_state.page_elem.change_df(new_df)
-        st.session_state.page_elem.update_values()
+        st.session_state.obj.change_df(new_df)
+        st.session_state.obj.update_values()
         st.session_state.is_change[st.session_state.page-1] = False
+        return True
+    return False
 
 
-def show_page():
-    st.session_state.page_elem.show_number()
-    st.session_state.page_elem.show_titles()
-    st.session_state.page_elem.show_videos()
-    st.session_state.is_change[st.session_state.page] = True    
+def show_page() -> None:
+    """
+    Show page number, title of table and information about video.
+
+    :return: None
+    """
+    st.session_state.obj.show_number()
+    st.session_state.obj.show_titles()
+    st.session_state.obj.show_videos()
+    st.session_state.is_change[st.session_state.page] = True 
+    return None   
 
 
-def main():
+def main() -> None:
+    """
+    Main function of streamlit application.
+
+    :return: None
+    """
     settings_params()
 
     df = change_columns_df(init_df())
@@ -93,22 +138,23 @@ def main():
    # button_next = st.button("Next", disabled=(st.session_state.page > 3))
 
     placeholder = st.empty()
-    
-    start(placeholder, df)
 
-    st.button("Next", on_click=nextpage, disabled=(st.session_state.page > 21))
+    init(placeholder=placeholder, df=df)
+
+    st.button(label="Next", on_click=nextpage, disabled=(st.session_state.page > 21))
 
     if st.session_state.page == 1:
         show_page()
 
     elif st.session_state.page <= 20:
-        reboot(df_1)
+        update(new_df=df_1)
         show_page()
 
     else:
         with placeholder:
             st.write("This is the end")
-            st.button("Restart",on_click=restart)
+            st.button("Restart", on_click=restart)
+
 
 
 if __name__ == "__main__":

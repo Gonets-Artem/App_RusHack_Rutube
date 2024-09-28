@@ -5,7 +5,15 @@ import emoji
 
 
 class Page:
-    def __init__(self, placeholder, df, page):
+    def __init__(self, placeholder: st.empty, df: pd.DataFrame, page: int):
+        """
+        .
+
+        :param placeholder: .
+        :param df: .
+        :param page: .
+        :return: A greeting message
+        """
         self.placeholder = placeholder
         self.df = df
         self.page = page
